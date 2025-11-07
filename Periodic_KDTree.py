@@ -6,36 +6,35 @@ class Periodic_KDTree:
         self.points = points
         self.N = N
         self.tree = KDTree(self.points)
-        self.NonTreePoints = np.array([]) #points not added to tree yet
+        self.num_points_in_tree = self.points.shape[0]
+        self.points_not_in_tree = np.array([])
 
     def rebuild_tree(self):
-        self.points = np.vstack([self.points, self.NonTreePoints])
-        self.NonTreePoints = np.array([])
         self.tree = KDTree(self.points)
+        self.num_points_in_tree = self.points.shape[0]
+        self.points_not_in_tree = np.array([])
+
     
     def add_point(self, p):
-        if self.NonTreePoints.size == 0:
-            self.NonTreePoints = p
+        self.points = np.vstack([self.points, p])
+        if self.points_not_in_tree.size == 0:
+            self.points_not_in_tree = p
         else:
-            self.NonTreePoints = np.vstack([self.NonTreePoints, p])
-            if self.NonTreePoints.shape[0] == self.N:
-                self.rebuild_tree()
-                self.NonTreePoints = np.array([])
+            self.points_not_in_tree = np.vstack([self.points_not_in_tree, p])
+        if self.points_not_in_tree.shape[0] == self.N:
+            self.rebuild_tree()
+            
     
     def calc_cost(self,p1, p2):
-        pass
+        return np.linalg.norm(p1-p2)
     
     def nearest(self, p):
-        min_dist, idx = self.tree.query(p, 1) #find nearest point in tree
-        for i in range(self.NonTreePoints.shape[0]):
-            x = self.NonTreePoints[i,:]
-            dist = np.linalg.norm(p - x)
-            if dist < min_dist:
-                min_dist = dist
-            
+        dist, idx = self.tree.query(p)
+        for i in range(.):
 
             
-            
+
+
         
 
                 
