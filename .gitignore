@@ -1,2 +1,4 @@
 .venv/
 .myvenv311/
+claude.py
+dynotree_test.py
