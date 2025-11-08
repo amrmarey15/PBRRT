@@ -4,7 +4,6 @@ import numpy as np
 class Periodic_KDTree:
     def __init__(self, points, N, max_samples_in_tree = 1e6): #N is after how many number of points you rebuild KDTree
         self.num_points = points.shape[0]
-        self.old
         self.N = N
         
         self.points_in_tree_PreAlloc = np.empty((max_samples_in_tree, points.shape[1])) #Preallocated Matrix Initialization
@@ -48,7 +47,7 @@ class Periodic_KDTree:
         for i in idx:
             point_id = self.num_points - self.number_of_points_outside_Tree + i
             near_points_indices_outside_tree.append(point_id)
-        return near_points_indices_tree.extend(near_points_indices_outside_tree)
+        return near_points_indices_tree + near_points_indices_outside_tree
         
         
         
