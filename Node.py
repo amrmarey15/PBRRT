@@ -1,8 +1,11 @@
+import numpy as np
+
 class Node:
     #all = []
     def __init__(self, x,y):
         self.x = x
         self.y = y
+        self.pos = np.array([x,y])
         self.parent = None
         self.cost = 0.0     
         self.children = None

@@ -35,11 +35,24 @@ class Periodic_KDTree:
             if min_dist_tree < min_dist_outside_tree:
                 return min_idx_tree
             else:
-                return self.num_points - self.N + idx_outside_tree
+                return self.num_points - self.number_of_points_outside_Tree + idx_outside_tree
         else:
             return min_idx_tree
 
-            
+    def query_ball_point(self, p, r): # return all the points within radius r of query point p
+        near_points_indices_tree = self.tree.query_ball_point(p, r)
+        
+        sq_dist_outside_tree = np.sum((self.points_not_in_tree_PreAlloc[0:self.number_of_points_outside_Tree,:] - p)**2, axis=1)
+        idx = np.where(sq_dist_outside_tree < r*r)[0]
+        near_points_indices_outside_tree = []
+        for i in idx:
+            point_id = self.num_points - self.number_of_points_outside_Tree + i
+            near_points_indices_outside_tree.append(point_id)
+        return near_points_indices_tree.extend(near_points_indices_outside_tree)
+        
+        
+        
+    
 
 
         
