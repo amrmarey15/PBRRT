@@ -20,7 +20,7 @@ class Node:
     def __repr__(self):
         return f"({self.x},{self.y})"
     
-    def append_to_tree(self): #Don't really need this method.
+    def append_to_tree(self): #Not going to use this anymore
         self.in_Tree = True
         Node.nodes_in_tree.append(self) # Add to list of nodes
     

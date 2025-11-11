@@ -12,9 +12,9 @@ class PBRRT_STAR:
         self.nodes_in_tree = Periodic_KDTree(PBRRT_params["start"], PBRRT_params["N"])
     
     def Nearest(self, sampled_node): # Return index for nearest node
-        return Node.all[self.nodes_in_tree.nearest(sampled_node)]
+        return Node.all[self.nodes_in_tree.nearest(sampled_node.pos)]
     
-    def StaticCollisionFree(self,old_sample, new_sample):
+    def StaticCollisionFree(self,old_sample, new_sample): #Check colisions for nearest obstacles. Will assume obstacles are rectangles for the demo
         for line_sample_parameter in self.line_sample_parameters:
             x_coordinate = old_sample.x + line_sample_parameter*(new_sample.x - old_sample.x)
             y_coordinate = old_sample.y + line_sample_parameter*(new_sample.y - old_sample.y)
@@ -23,9 +23,15 @@ class PBRRT_STAR:
                     return False
         return True
     
-    def Steer(self, nearest_sample_in_tree, sampled_node):
+    def Steer(self, nearest_sample_in_tree, sampled_node): #Steer towards sampled node (Like RRT*)
         np_nearest_sample_in_tree = nearest_sample_in_tree.pos
         np_sampled_node = sampled_node.pos
         unit_vector = (np_sampled_node - np_nearest_sample_in_tree)/np.linalg.norm(np_nearest_sample_in_tree - np_sampled_node)
         new_node_np = np_nearest_sample_in_tree + self.step_size*(unit_vector)
         return Node(float(new_node_np[0]), float(new_node_np[1]))
+    
+    def Near(self, sample, R):
+        near_nodes_indices = self.nodes_in_tree.query_ball_point(sample.pos, R)
+        
+
+

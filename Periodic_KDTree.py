@@ -1,15 +1,17 @@
 from scipy.spatial import KDTree
 import numpy as np
+from Node import Node
 
 class Periodic_KDTree:
-    def __init__(self, points, N, max_samples_in_tree = 1e6): #N is after how many number of points you rebuild KDTree
-        self.num_points = points.shape[0]
+    def __init__(self, start_point: Node, N, max_samples_in_tree = 1e6): #N is after how many number of points you rebuild KDTree
+        start_point = start_point.pos #Convert to numpy position representation
+        self.num_points = 1 
         self.N = N
         
-        self.points_in_tree_PreAlloc = np.empty((max_samples_in_tree, points.shape[1])) #Preallocated Matrix Initialization
-        self.points_in_tree_PreAlloc[0:self.num_points, :] = points
-        self.tree = KDTree(points)
-        self.points_not_in_tree_PreAlloc =  np.empty((N, points.shape[1])) #Preallocated Matrix Initialization
+        self.points_in_tree_PreAlloc = np.empty((max_samples_in_tree, start_point.shape[1])) #Preallocated Matrix Initialization
+        self.points_in_tree_PreAlloc[0, :] = start_point
+        self.tree = KDTree(start_point)
+        self.points_not_in_tree_PreAlloc =  np.empty((N, start_point.shape[1])) #Preallocated Matrix Initialization
         self.number_of_points_outside_Tree = 0
 
     def rebuild_tree(self):
@@ -17,7 +19,8 @@ class Periodic_KDTree:
         self.number_of_points_outside_Tree = 0
 
 
-    def add_point(self, p):
+    def add_point(self, p: Node):
+        p = p.pos #Convert to numpy position representation
         self.points_in_tree_PreAlloc[self.num_points, :] = p
         self.num_points = self.num_points + 1
         self.points_not_in_tree_PreAlloc[self.number_of_points_outside_Tree, :] = p
@@ -25,7 +28,8 @@ class Periodic_KDTree:
         if self.number_of_points_outside_Tree == self.N:
             self.rebuild_tree()
     
-    def nearest(self, p): #Return nearest neigbour index
+    def nearest(self, p: Node): #Return nearest neigbour index
+        p = p.pos #Convert to numpy position representation
         min_dist_tree, min_idx_tree = self.tree.query(p)
         if self.number_of_points_outside_Tree > 0:
             sq_dists_outside_tree = np.sum((self.points_not_in_tree_PreAlloc[0:self.number_of_points_outside_Tree,:] - p)**2, axis=1)
@@ -38,7 +42,8 @@ class Periodic_KDTree:
         else:
             return min_idx_tree
 
-    def query_ball_point(self, p, r): # return all the points within radius r of query point p
+    def query_ball_point(self, p, r): # return all the points within radius r of query node p
+        p = p.pos #Convert to numpy position representation
         near_points_indices_tree = self.tree.query_ball_point(p, r)
         
         sq_dist_outside_tree = np.sum((self.points_not_in_tree_PreAlloc[0:self.number_of_points_outside_Tree,:] - p)**2, axis=1)
