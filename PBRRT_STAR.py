@@ -1,8 +1,9 @@
 import copy
 import numpy as np
-import Periodic_KDTree
-from Node import Node
-from StaticObstacle import StaticObstacle
+from Periodic_KDTree import *
+from Node import *
+from StaticObstacle import *
+from DynamicObstacle import *
 import random
 class PBRRT_STAR:
     def __init__(self, PBRRT_params: dict, map: dict, estimator_params: dict):
@@ -35,7 +36,7 @@ class PBRRT_STAR:
         return self.Tree.Nodes_in_Tree[near_nodes_indices]
     
     def DynamicCollisionFree(self, sample_1: Node, sample_2: Node):
-        pass
+        P_list = np.empty(len(DynamicObstacle.all)) #This list will contain all  
         
     
     def initial_plan(self): # Developing the path without a prior tree or path considered
