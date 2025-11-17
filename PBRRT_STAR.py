@@ -36,7 +36,10 @@ class PBRRT_STAR:
         return self.Tree.Nodes_in_Tree[near_nodes_indices]
     
     def DynamicCollisionFree(self, sample_1: Node, sample_2: Node):
-        P_list = np.empty(len(DynamicObstacle.all)) #This list will contain all  
+        P_list = np.empty(len(DynamicObstacle.all)) #This list will contain the probabilities that collision will happen with each one of the obstacles
+        for D_obstacle in DynamicObstacle.all:
+            pass
+            
         
     
     def initial_plan(self): # Developing the path without a prior tree or path considered

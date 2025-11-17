@@ -27,7 +27,7 @@ class Node:
     def update_parent(self, parent):
         self.parent = parent
     
-    def Get_Node_Time(self): #obtain how much time it takes to arrive to node
+    def Get_Node_Time(self): #obtain how much discrete time it takes to arrive to node from start
         parent_node = self.parent
         if parent_node == None:
             return 0
@@ -37,5 +37,8 @@ class Node:
             parent_node = parent_node.parent
         
         return k
+    
+    def Get_Node_Time_Between_Two_Nodes(self, Node_Ancestor, Node_Child): #Get discrete time between ancestor node and child node
+        pass
             
             
