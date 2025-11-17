@@ -3,7 +3,8 @@ import numpy as np
 from Node import Node
 
 class Periodic_KDTree:
-    def __init__(self, start_point: Node, N, max_samples_in_tree = 1e6): #N is after how many number of points you rebuild KDTree
+    def __init__(self, start_point: Node, N: int, max_samples_in_tree: int = 1_000_000): #N is after how many number of points you rebuild KDTree
+        self.Nodes_in_Tree = [start_point]
         start_point = start_point.pos #Convert to numpy position representation
         self.num_points = 1 
         self.N = N
@@ -20,6 +21,7 @@ class Periodic_KDTree:
 
 
     def add_point(self, p: Node):
+        self.Nodes_in_Tree.append(p)
         p = p.pos #Convert to numpy position representation
         self.points_in_tree_PreAlloc[self.num_points, :] = p
         self.num_points = self.num_points + 1
@@ -42,7 +44,7 @@ class Periodic_KDTree:
         else:
             return min_idx_tree
 
-    def query_ball_point(self, p, r): # return all the points within radius r of query node p
+    def query_ball_point(self, p: Node, r: float): # return all the points within radius r of query node p
         p = p.pos #Convert to numpy position representation
         near_points_indices_tree = self.tree.query_ball_point(p, r)
         

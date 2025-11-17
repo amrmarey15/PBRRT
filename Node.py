@@ -26,3 +26,16 @@ class Node:
     
     def update_parent(self, parent):
         self.parent = parent
+    
+    def Get_Node_Time(self): #obtain how much time it takes to arrive to node
+        parent_node = self.parent
+        if parent_node == None:
+            return 0
+        k = self.k_star
+        while parent_node != None:
+            k = k + parent_node.k_star
+            parent_node = parent_node.parent
+        
+        return k
+            
+            
