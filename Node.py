@@ -9,7 +9,7 @@ class Node:
         self.parent = None
         self.cost = 0.0     
         self.children = None
-        self.k_star = 1 #Arrival time from parent
+        self.k_star = 0 #Arrival time from parent
         self.in_Tree = False
         
     def __eq__(self, other):
@@ -39,6 +39,12 @@ class Node:
         return k
     
     def Get_Node_Time_Between_Two_Nodes(self, Node_Ancestor, Node_Child): #Get discrete time between ancestor node and child node
-        pass
+        k = 0
+        while(Node_Child != Node_Ancestor):
+            k = k + Node_Child.k_star
+            Node_Child = Node_Child.parent
+            if Node_Child == None:
+                raise Exception("Nodes are not connected")
+                
             
             
