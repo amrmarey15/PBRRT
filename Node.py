@@ -45,6 +45,6 @@ class Node:
             Node_Child = Node_Child.parent
             if Node_Child == None:
                 raise Exception("Nodes are not connected")
-                
+        return k
             
             
