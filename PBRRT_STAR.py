@@ -16,7 +16,7 @@ class PBRRT_STAR:
         return self.Tree.Nodes_in_Tree[self.Tree.nearest(sampled_node.pos)]
     
     def StaticCollisionFree(self,old_sample: Node, new_sample: Node): #Check colisions for nearest obstacles. Will assume obstacles are rectangles for the demo
-        for line_sample_parameter in self.line_sample_parameters:
+        for line_sample_parameter in self.line_sample_parameters: #How many times you want to check for collisions (usually set it to 1)
             x_coordinate = old_sample.x + line_sample_parameter*(new_sample.x - old_sample.x)
             y_coordinate = old_sample.y + line_sample_parameter*(new_sample.y - old_sample.y)
             for static_obstacle in StaticObstacle.all:
@@ -36,9 +36,12 @@ class PBRRT_STAR:
         return self.Tree.Nodes_in_Tree[near_nodes_indices]
     
     def DynamicCollisionFree(self, sample_1: Node, sample_2: Node):
-        P_list = np.empty(len(DynamicObstacle.all)) #This list will contain the probabilities that collision will happen with each one of the obstacles
-        for D_obstacle in DynamicObstacle.all:
-            pass
+        for k_arrival in range(self.PBRRT_params["K_limits"]):
+            P_list = np.empty(len(DynamicObstacle.all)) #This list will contain the probabilities that collision will happen with each one of the obstacles at arrival time
+            for D_obstacle in DynamicObstacle.all:
+                pass
+                #P_obstacle = #Probability obstacle will cause collision
+                
             
         
     
