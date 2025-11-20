@@ -1,29 +1,18 @@
 #Dynamic Obstacles are circles
+import numpy as np
 class DynamicObstacle:
     all = []
-    def __init__(self, x,y, radius, vx, vy, dt):
+    def __init__(self, pos: np.ndarray, radius, v: np.ndarray, dt = 1):
         
-        #Initial Conditions
-        self.x0 = x
-        self.y0 = y
-        self.vx0 = vx
-        self.vy0 = vy
+        self.pos0 = pos #Initial Conditions
+        self.pos = pos #position array
+        self.v = v #velocity array
         self.r = radius
-        
-        
-        self.x = x
-        self.y = y
-        self.vx = vx
-        self.vy = vy
-        
         self.dt = dt
-        DynamicObstacle.all.append(self) # Add to list of nodes
+        DynamicObstacle.all.append(self) # Add to list of Dynamic Obstacles
 
-    def update_state(self, acceleration):
-        self.vx = self.vx + acceleration[0]*self.dt
-        self.vy = self.vy + acceleration[1]*self.dt
-        self.x = self.x + self.vx*self.dt + 0.5* acceleration[0]*self.dt**2
-        self.y = self.y + self.vy*self.dt + 0.5* acceleration[1]*self.dt**2
-    
+    def update_state(self, future_pos: np.ndarray):
+        self.pos = future_pos
+        
     def __repr__(self):
         return f"({self.x},{self.y}, {self.r})"
