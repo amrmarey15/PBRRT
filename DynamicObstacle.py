@@ -13,6 +13,11 @@ class DynamicObstacle:
 
     def update_state(self, future_pos: np.ndarray):
         self.pos = future_pos
+    
+    def __eq__(self, other):
+        if isinstance(other, DynamicObstacle):
+            return self.pos == other.pos and self.r == other.r
+        return False
         
     def __repr__(self):
         return f"({self.x},{self.y}, {self.r})"
