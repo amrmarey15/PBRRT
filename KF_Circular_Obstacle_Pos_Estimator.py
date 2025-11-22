@@ -1,9 +1,11 @@
 import numpy as np
 from Node import *
 from DynamicObstacle import *
+from scipy.stats import ncx2
 
 class KF_Circular_Obstacle_Pos_Estimator: #Calculates probability a circular obstacle will be at a given position using a discrete Kalman Filter
-    #State space eqn modeled to predict obstacle location at time k+1 is x(k+1) = I*x(k) + u where u = x(k) - x(k-1) (approximate linear velocity) 
+    #State space eqn modeled to predict obstacle location at time k+1 is x(k+1) = I*x(k) + u where u = x(k) - x(k-1) (approximate linear velocity)
+    #We will assume Q, V are a istopic matrix to work for def calculate_probability_of_collision to work properly
     def __init__(self, obstacle: DynamicObstacle, Q: np.ndarray, V: np, P_posteriori_0: np.ndarray):
         self.u = 0 #assume u(0) = 0
         self.Q = Q
@@ -35,6 +37,21 @@ class KF_Circular_Obstacle_Pos_Estimator: #Calculates probability a circular obs
         self.P_posteriori = M @ self.P_priori @ np.transpose(M) + self.K_star @ self.V @ np.transpose(self.K_star)
         
     def calculate_probability_of_collision(self, x_query: np.ndarray):
+        
+        mu = self.x_posteriori
+        x_q = np.asarray(x_q)
+        d = self.dim
+        sigma_squared = self.P_posteriori[0,0]
+        R = self.r
+        # noncentrality parameter λ = ||mu - x_q||^2 / sigma^2
+        lam = np.sum((mu - x_q)**2) / (sigma_squared)
+
+        # upper limit for the noncentral chi-square
+        t = (R**2) / (sigma_squared)
+
+        # CDF of noncentral chi-square
+        return ncx2.cdf(t, df=d, nc=lam)
+        
         
         
         
