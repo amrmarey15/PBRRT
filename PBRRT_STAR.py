@@ -5,11 +5,12 @@ from Node import *
 from StaticObstacle import *
 from DynamicObstacle import *
 import random
+from KF_Circular_Obstacle_Pos_Estimator import *
 class PBRRT_STAR:
-    def __init__(self, PBRRT_params: dict, map: dict, estimator_params: dict):
+    def __init__(self, PBRRT_params: dict, map: dict, estimators: list):
         self.PBRRT_params = copy.deepcopy(PBRRT_params) # copy.deepcopy points to a whole new dictionary that is identical to the original dictionary
         self.map = copy.deepcopy(map)
-        self.estimator_params = copy.deepcopy(estimator_params)
+        self.estimators = copy.deepcopy(estimators)
         self.Tree = Periodic_KDTree(PBRRT_params["start"], PBRRT_params["N"])
     
     def Nearest(self, sampled_node: Node): # Return index for nearest node
@@ -35,12 +36,21 @@ class PBRRT_STAR:
         near_nodes_indices = self.Tree.query_ball_point(sample, R)
         return self.Tree.Nodes_in_Tree[near_nodes_indices]
     
-    def DynamicCollisionFree(self, sample_1: Node, sample_2: Node):
+    def DynamicCollisionFree(self, sample_arrival: Node):
+        min_probability_collision = 1 #minimum probability of collision initialization
+        best_k_arrival_time = -1
         for k_arrival in range(self.PBRRT_params["K_limits"]):
-            P_list = np.empty(len(DynamicObstacle.all)) #This list will contain the probabilities that collision will happen with each one of the obstacles at arrival time
-            for D_obstacle in DynamicObstacle.all:
-                pass
-                #P_obstacle = #Probability obstacle will cause collision
+            no_collision_P_list = np.empty(len(DynamicObstacle.all)) #This list will contain the probabilities that collision will happen with each one of the obstacles at arrival time
+            for estimator, i in zip(KF_Circular_Obstacle_Pos_Estimator.all, range(len(DynamicObstacle.all))):
+                P_obstacle = estimator.calculate_probability_of_collision(sample_arrival, k_arrival) #Probability obstacle will cause collision at node
+                no_collision_P_list[i] = 1 - P_obstacle #Probability of no collision
+            probabilty_collision = 1 - np.prod(no_collision_P_list)
+            if probabilty_collision < min_probability_collision:
+                min_probability_collision = probabilty_collision
+                best_k_arrival_time = k_arrival
+            
+        return min_probability_collision, best_k_arrival_time
+
                 
             
         
@@ -52,4 +62,7 @@ class PBRRT_STAR:
             nearest_sample_in_tree = self.Nearest(sampled_node)
             new_sample = self.Steer(nearest_sample_in_tree, sampled_node)
             if self.StaticCollisionFree(nearest_sample_in_tree, new_sample): #If there is no static obstacle collision from the Steer earlier (Still need to check dynamic obstacles)
-                pass
+                prob_collision, best_k_arrival_time = self.DynamicCollisionFree(new_sample)
+                if prob_collision > self.PBRRT_params["P_coll"]:
+                    break
+            
