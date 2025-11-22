@@ -85,9 +85,11 @@ class PBRRT_STAR:
                 if max_gen_considered_bool == True and num_generations > max_gen_considered:
                     prob_collision = 0 #We are so far ahead in the node generation planning that we have no idea if collisions will actually happen or not
                     best_k_arrival_time = 1
+                    c_line = np.linalg.norm(new_sample.pos - nearest_sample_in_tree.pos)
                 else:
                     prob_collision, best_k_arrival_time = self.DynamicCollisionFree(new_sample)
                     if prob_collision > P_coll:
-                        continue    
-            #c_line = #cost only from node to another node in its region
+                        continue
+                    else:
+                        c_line = prob_collision*M*(gamma**num_generations) + (1-prob_collision*(gamma**num_generations))*np.linalg.norm(new_sample.pos - nearest_sample_in_tree.pos)
             
