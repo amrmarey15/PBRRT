@@ -14,7 +14,7 @@ class PBRRT_STAR:
         self.Tree = Periodic_KDTree(PBRRT_params["start"], PBRRT_params["N"])
 
         self.current_node_location = PBRRT_params["start"] #Where you are at right now
-    def Nearest(self, sampled_node: Node): # Return index for nearest node
+    def Nearest(self, sampled_node: Node): # Return nearest node
         return self.Tree.Nodes_in_Tree[self.Tree.nearest(sampled_node.pos)]
     
     def StaticCollisionFree(self,old_sample: Node, new_sample: Node): #Check colisions for nearest obstacles. Will assume obstacles are rectangles for the demo
@@ -76,6 +76,7 @@ class PBRRT_STAR:
         P_coll = self.PBRRT_params["P_coll"]
         max_gen_considered = self.PBRRT_params["max_gen_considered"]
         max_gen_considered_bool = self.PBRRT_params["max_gen_considered_bool"]
+        R = self.PBRRT_params["R"] #radius of search
         for i in range(max_iter):
             sampled_node = Node(np.random.rand(map_dim) @ map_size)
             nearest_sample_in_tree = self.Nearest(sampled_node)
@@ -92,4 +93,9 @@ class PBRRT_STAR:
                         continue
                     else:
                         c_line = prob_collision*M*(gamma**num_generations) + (1-prob_collision*(gamma**num_generations))*np.linalg.norm(new_sample.pos - nearest_sample_in_tree.pos)
+                near_nodes_list = self.Near(new_sample, R)
+                self.Tree.add_point(new_sample)
+                new_sample.parent = nearest_sample_in_tree
+                
+
             
