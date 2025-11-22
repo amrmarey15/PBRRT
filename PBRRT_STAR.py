@@ -12,12 +12,13 @@ class PBRRT_STAR:
         self.map = copy.deepcopy(map)
         self.estimators = copy.deepcopy(estimators)
         self.Tree = Periodic_KDTree(PBRRT_params["start"], PBRRT_params["N"])
-    
+
+        self.current_node_location = PBRRT_params["start"] #Where you are at right now
     def Nearest(self, sampled_node: Node): # Return index for nearest node
         return self.Tree.Nodes_in_Tree[self.Tree.nearest(sampled_node.pos)]
     
     def StaticCollisionFree(self,old_sample: Node, new_sample: Node): #Check colisions for nearest obstacles. Will assume obstacles are rectangles for the demo
-        for line_sample_parameter in self.line_sample_parameters: #How many times you want to check for collisions (usually set it to 1)
+        for line_sample_parameter in self.PBRRT_params["Line_Sample_Parameters"]: #How many times you want to check for collisions (usually set it to 1)
             x_coordinate = old_sample.x + line_sample_parameter*(new_sample.x - old_sample.x)
             y_coordinate = old_sample.y + line_sample_parameter*(new_sample.y - old_sample.y)
             for static_obstacle in StaticObstacle.all:
@@ -29,8 +30,8 @@ class PBRRT_STAR:
         np_nearest_sample_in_tree = nearest_sample_in_tree.pos
         np_sampled_node = sampled_node.pos
         unit_vector = (np_sampled_node - np_nearest_sample_in_tree)/np.linalg.norm(np_nearest_sample_in_tree - np_sampled_node)
-        new_node_np = np_nearest_sample_in_tree + self.step_size*(unit_vector)
-        return Node(float(new_node_np[0]), float(new_node_np[1]))
+        new_node_np = np_nearest_sample_in_tree + self.PBRRT_params["Step_Size"]*(unit_vector)
+        return Node(new_node_np.astype(float))
     
     def Near(self, sample: Node, R: float): #Determine nodes within radius R of query node
         near_nodes_indices = self.Tree.query_ball_point(sample, R)
@@ -51,18 +52,42 @@ class PBRRT_STAR:
             
         return min_probability_collision, best_k_arrival_time
 
-                
+    def calc_num_generations_to_ancestor_node(child_node, ancestor_node):
+        num_generations = 0
+        while child_node != ancestor_node:
+            child_node = child_node.parent
+            num_generations = num_generations + 1
+            if child_node == None:
+                raise Exception("Nodes are not connected")
+        return num_generations
+    
+
+        
+    
             
         
     
     def initial_plan(self): # Developing the path without a prior tree or path considered
-        map_size = self.PBRRT_params["Map_Size"]
-        for i in range(self.PBRRT_params["Max_Iterations"]):
-            sampled_node = Node(random.uniform(0, self.map_size[0]), random.uniform(0, self.map_size[1]))
+        map_size = np.array(self.PBRRT_params["Map_Size"])
+        map_dim  = len(map_size)
+        max_iter = self.PBRRT_params["Max_Iterations"]
+        M = self.PBRRT_params["M"]
+        gamma = self.PBRRT_params["gamma"]
+        P_coll = self.PBRRT_params["P_coll"]
+        max_gen_considered = self.PBRRT_params["max_gen_considered"]
+        max_gen_considered_bool = self.PBRRT_params["max_gen_considered_bool"]
+        for i in range(max_iter):
+            sampled_node = Node(np.random.rand(map_dim) @ map_size)
             nearest_sample_in_tree = self.Nearest(sampled_node)
             new_sample = self.Steer(nearest_sample_in_tree, sampled_node)
             if self.StaticCollisionFree(nearest_sample_in_tree, new_sample): #If there is no static obstacle collision from the Steer earlier (Still need to check dynamic obstacles)
-                prob_collision, best_k_arrival_time = self.DynamicCollisionFree(new_sample)
-                if prob_collision > self.PBRRT_params["P_coll"]:
-                    break
+                num_generations = self.calc_num_generations(self.current_node_location, new_sample) #Number of generations ahead of where robot is at so far
+                if max_gen_considered_bool == True and num_generations > max_gen_considered:
+                    prob_collision = 0 #We are so far ahead in the node generation planning that we have no idea if collisions will actually happen or not
+                    best_k_arrival_time = 1
+                else:
+                    prob_collision, best_k_arrival_time = self.DynamicCollisionFree(new_sample)
+                    if prob_collision > P_coll:
+                        continue    
+            #c_line = #cost only from node to another node in its region
             
