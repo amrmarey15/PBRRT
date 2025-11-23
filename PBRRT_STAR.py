@@ -73,17 +73,16 @@ class PBRRT_STAR:
         max_iter = self.PBRRT_params["Max_Iterations"]
         M = self.PBRRT_params["M"]
         gamma = self.PBRRT_params["gamma"]
-        P_coll = self.PBRRT_params["P_coll"]
-        max_gen_considered = self.PBRRT_params["max_gen_considered"]
-        max_gen_considered_bool = self.PBRRT_params["max_gen_considered_bool"]
+        P_coll = self.PBRRT_params["P_coll"] #
         R = self.PBRRT_params["R"] #radius of search
+        prod_gamma_numgen_prob_param =  self.PBRRT_params["alpha"] #if gamma**num_generations is less than this number no point in computing the probability because it will begin to have no effect
         for i in range(max_iter):
             sampled_node = Node(np.random.rand(map_dim) @ map_size)
             nearest_sample_in_tree = self.Nearest(sampled_node)
             new_sample = self.Steer(nearest_sample_in_tree, sampled_node)
             if self.StaticCollisionFree(nearest_sample_in_tree, new_sample): #If there is no static obstacle collision from the Steer earlier (Still need to check dynamic obstacles)
-                num_generations = self.calc_num_generations(self.current_node_location, new_sample) #Number of generations ahead of where robot is at so far
-                if max_gen_considered_bool == True and num_generations > max_gen_considered:
+                num_generations = self.calc_num_generations(self.current_node_location, nearest_sample_in_tree) #Number of generations ahead of where robot is at so far
+                if gamma**num_generations < prod_gamma_numgen_prob_param:
                     prob_collision = 0 #We are so far ahead in the node generation planning that we have no idea if collisions will actually happen or not
                     best_k_arrival_time = 1
                     c_line = np.linalg.norm(new_sample.pos - nearest_sample_in_tree.pos)
@@ -96,6 +95,26 @@ class PBRRT_STAR:
                 near_nodes_list = self.Near(new_sample, R)
                 self.Tree.add_point(new_sample)
                 new_sample.parent = nearest_sample_in_tree
-                
+                new_sample.node_prob_collision = prob_collision
+                new_sample.k_star = best_k_arrival_time
+                sample_min = nearest_sample_in_tree
+                cost_min = nearest_sample_in_tree.cost + c_line
+                new_sample.cost = cost_min
+                for node in near_nodes_list:
+                    if self.StaticCollisionFree(node, new_sample):
+                        c_line = prob_collision*M*(gamma**num_generations) + (1-(self.gamma**num_generations)*prob_collision)*np.linalg.norm(node.pos - new_sample.pos)
+                        cost = new_sample.cost + c_line
+                        if node.cost < cost:
+                            node.parent = new_sample
+                            node.cost = cost
+                            node.k_star = best_k_arrival_time
+                            node.node_prob_collision = prob_collision
+
+                        
+
+                        
+
+
+
 
             

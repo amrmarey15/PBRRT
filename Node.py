@@ -9,7 +9,7 @@ class Node:
         self.children = None
         self.k_star = 1 #Arrival time from parent
         self.in_Tree = False
-        
+        self.node_prob_collision = 0 # probability that node will not be in Cfree at the arrival time from parent node
     def __eq__(self, other):
         if isinstance(other, Node):
             return self.pos == other.pos
@@ -34,7 +34,7 @@ class Node:
                 raise Exception("Nodes are not connected")
         return k
     
-    def calc_num_generations_to_ancestor_node(self, ancestor_node):
+    def calc_num_generations_to_ancestor_node(self, ancestor_node): #Returns 0 between first generation difference, 1 between second generation difference etc
         num_generations = 0
         current_node = self
         while current_node != ancestor_node:
