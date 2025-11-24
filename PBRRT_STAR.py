@@ -37,10 +37,11 @@ class PBRRT_STAR:
         near_nodes_indices = self.Tree.query_ball_point(sample, R)
         return self.Tree.Nodes_in_Tree[near_nodes_indices]
     
-    def DynamicCollisionFree(self, sample_arrival: Node):
+    def DynamicCollisionFree(self, sample_arrival: Node, k_start: int):
         min_probability_collision = 1 #minimum probability of collision initialization
         best_k_arrival_time = -1
-        for k_arrival in range(self.PBRRT_params["K_limits"]):
+        for k in range(self.PBRRT_params["K_limits"]):
+            k_arrival = k + k_start
             no_collision_P_list = np.empty(len(DynamicObstacle.all)) #This list will contain the probabilities that collision will happen with each one of the obstacles at arrival time
             for dynamic_obstacle, i in zip(DynamicObstacle.all, range(len(DynamicObstacle.all))):
                 estimator = dynamic_obstacle.estimator
@@ -50,8 +51,8 @@ class PBRRT_STAR:
             if probabilty_collision < min_probability_collision:
                 min_probability_collision = probabilty_collision
                 best_k_arrival_time = k_arrival
-            
-        return min_probability_collision, best_k_arrival_time
+            k = best_k_arrival_time - k_start
+        return min_probability_collision, k
 
     def calc_num_generations_to_ancestor_node(child_node, ancestor_node):
         num_generations = 0
@@ -61,6 +62,23 @@ class PBRRT_STAR:
             if child_node == None:
                 raise Exception("Nodes are not connected")
         return num_generations
+    
+    def calc_time_between_two_nodes(child_node: Node, ancestor_node: Node):
+        k_total = 0
+        while child_node != ancestor_node:
+            k_total = k_total + child_node.k_star
+            child_node = child_node.parent
+            if child_node == None:
+                print("Nodes not connected! You can't calculate time between these two nodes")
+        return k_total
+    
+    def is_goal_reached(self, sample: Node):
+        if np.linalg.norm(self.PBRRT_params["Goal_Node"].pos - sample.pos) < self.PBRRT_params["Final_Radius_Limit"] and sample.parent !=None:
+            return True
+        else:
+            return False
+        
+        
     
 
         
