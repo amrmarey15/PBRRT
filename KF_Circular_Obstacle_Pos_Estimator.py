@@ -23,10 +23,12 @@ class KF_Circular_Obstacle_Pos_Estimator: #Calculates probability a circular obs
         for dynamic_obstacle in DynamicObstacle.all:
             if obstacle == dynamic_obstacle:
                 self.which_dynamic_obstacle = i #determines which obstacle im referring to in DynamicObstacle.all
+                dynamic_obstacle.estimator = self
                 break
             i=i+1
-    
+
         self.r = obstacle.r # Radius (Needed to calculate probability of collision)
+
 
     def KF_update(self, x_measured: np.ndarray): #Given sensor value x_measured
         self.x_priori = self.x_posteriori + self.x_posteriori - self.x_prev

@@ -10,6 +10,7 @@ class DynamicObstacle:
         self.r = radius
         self.dt = dt
         DynamicObstacle.all.append(self) # Add to list of Dynamic Obstacles
+        self.estimator = None
     def update_state(self, future_pos: np.ndarray):
         self.pos = future_pos
     

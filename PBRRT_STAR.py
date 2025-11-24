@@ -42,7 +42,8 @@ class PBRRT_STAR:
         best_k_arrival_time = -1
         for k_arrival in range(self.PBRRT_params["K_limits"]):
             no_collision_P_list = np.empty(len(DynamicObstacle.all)) #This list will contain the probabilities that collision will happen with each one of the obstacles at arrival time
-            for estimator, i in zip(KF_Circular_Obstacle_Pos_Estimator.all, range(len(DynamicObstacle.all))):
+            for dynamic_obstacle, i in zip(DynamicObstacle.all, range(len(DynamicObstacle.all))):
+                estimator = dynamic_obstacle.estimator
                 P_obstacle = estimator.calculate_probability_of_collision(sample_arrival, k_arrival) #Probability obstacle will cause collision at node
                 no_collision_P_list[i] = 1 - P_obstacle #Probability of no collision
             probabilty_collision = 1 - np.prod(no_collision_P_list)
@@ -68,7 +69,7 @@ class PBRRT_STAR:
         
     
     def initial_plan(self): # Developing the path without a prior tree or path considered
-        map_size = np.array(self.PBRRT_params["Map_Size"])
+        map_size = np.array(self.map["Map_Size"])
         map_dim  = len(map_size)
         max_iter = self.PBRRT_params["Max_Iterations"]
         M = self.PBRRT_params["M"]
@@ -109,6 +110,7 @@ class PBRRT_STAR:
                             node.cost = cost
                             node.k_star = best_k_arrival_time
                             node.node_prob_collision = prob_collision
+                
 
                         
 
