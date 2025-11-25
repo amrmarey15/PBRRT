@@ -3,7 +3,7 @@ import numpy as np
 class Node:
     nodes_in_tree = []
     def __init__(self, pos):
-        self.pos = pos
+        self.pos = np.array(pos)
         self.parent = None
         self.cost = 0.0     
         self.children = None

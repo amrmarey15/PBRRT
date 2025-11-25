@@ -15,7 +15,7 @@ class DynamicObstacle:
     
     def __eq__(self, other):
         if isinstance(other, DynamicObstacle):
-            return self.pos == other.pos and self.r == other.r
+            return np.linalg.norm(self.pos - other.pos) < 0.001 and self.r == other.r
         return False
         
     def __repr__(self):

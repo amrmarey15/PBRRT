@@ -8,11 +8,11 @@ class Periodic_KDTree:
         start_point = start_point.pos #Convert to numpy position representation
         self.num_points = 1 
         self.N = N
-        
-        self.points_in_tree_PreAlloc = np.empty((max_samples_in_tree, start_point.shape[1])) #Preallocated Matrix Initialization
+        self.points_in_tree_PreAlloc = np.empty((max_samples_in_tree, len(start_point))) #Preallocated Matrix Initialization
         self.points_in_tree_PreAlloc[0, :] = start_point
+        start_point = start_point.reshape((1,len(start_point)))
         self.tree = KDTree(start_point)
-        self.points_not_in_tree_PreAlloc =  np.empty((N, start_point.shape[1])) #Preallocated Matrix Initialization
+        self.points_not_in_tree_PreAlloc =  np.empty((int(N), int(len(start_point)))) #Preallocated Matrix Initialization
         self.number_of_points_outside_Tree = 0
 
     def rebuild_tree(self):

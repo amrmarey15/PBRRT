@@ -7,17 +7,18 @@ from DynamicObstacle import *
 import random
 from KF_Circular_Obstacle_Pos_Estimator import *
 class PBRRT_STAR:
-    def __init__(self, PBRRT_params: dict, estimators: list):
+    def __init__(self, PBRRT_params: dict):
         self.PBRRT_params = copy.deepcopy(PBRRT_params) # copy.deepcopy points to a whole new dictionary that is identical to the original dictionary
-        self.estimators = copy.deepcopy(estimators)
         self.Tree = Periodic_KDTree(PBRRT_params["start"], PBRRT_params["N"])
-
         self.current_node_location = PBRRT_params["start"] #Where you are at right now
+        self.Line_Sample_collision_checks = np.linspace(0,1,self.PBRRT_params["Line_Sample_collision_checks"])
     def Nearest(self, sampled_node: Node): # Return nearest node
-        return self.Tree.Nodes_in_Tree[self.Tree.nearest(sampled_node.pos)]
-    
+        print(sampled_node)
+        return self.Tree.Nodes_in_Tree[self.Tree.nearest(sampled_node)]
+
     def StaticCollisionFree(self,old_sample: Node, new_sample: Node): #Check colisions for nearest obstacles. Will assume obstacles are rectangles for the demo
-        for line_sample_parameter in self.PBRRT_params["Line_Sample_Parameters"]: #How many times you want to check for collisions (usually set it to 1)
+        for line_sample_parameter in self.Line_Sample_collision_checks: #How many times you want to check for collisions (usually set it to 1)
+            
             x_coordinate = old_sample.x + line_sample_parameter*(new_sample.x - old_sample.x)
             y_coordinate = old_sample.y + line_sample_parameter*(new_sample.y - old_sample.y)
             for static_obstacle in StaticObstacle.all:
@@ -86,7 +87,7 @@ class PBRRT_STAR:
         
     
     def initial_plan(self): # Developing the path without a prior tree or path considered
-        map_size = np.array(self.PBRRT_params["Map_Size"])
+        map_size = np.array(self.PBRRT_params["map_size"])
         map_dim  = len(map_size)
         max_iter = self.PBRRT_params["Max_Iterations"]
         M = self.PBRRT_params["M"]
@@ -95,7 +96,7 @@ class PBRRT_STAR:
         R = self.PBRRT_params["R"] #radius of search
         prod_gamma_numgen_prob_param =  self.PBRRT_params["alpha"] #if gamma**num_generations is less than this number no point in computing the probability because it will begin to have no effect
         for i in range(max_iter):
-            sampled_node = Node(np.random.rand(map_dim) @ map_size)
+            sampled_node = Node(np.random.rand(map_dim) * map_size)
             nearest_sample_in_tree = self.Nearest(sampled_node)
             new_sample = self.Steer(nearest_sample_in_tree, sampled_node)
             if self.StaticCollisionFree(nearest_sample_in_tree, new_sample): #If there is no static obstacle collision from the Steer earlier (Still need to check dynamic obstacles)

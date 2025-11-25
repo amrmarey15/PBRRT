@@ -24,7 +24,7 @@ def initial_generate_map_2D(num_d_obstacles: int, PBRRT_params: dict, estimator_
     circles = generate_circle_dynamic_obstacles(PBRRT_params, estimator_params)
     circ_patches = []
     for circle in circles:
-        circ_patches.append(patches.Circle((circle[0], circle[1]), radius=circle[2], radius=2.0, color='gray', alpha=0.6))
+        circ_patches.append(patches.Circle((circle[0], circle[1]), radius=circle[2], color='gray', alpha=0.6))
     
     for circ_patch in circ_patches:
         ax.add_patch(circ_patch)
@@ -40,8 +40,8 @@ def generate_circle_dynamic_obstacles(PBRRT_params: dict, estimator_params: dict
     V = estimator_params['V']
     P_Post = estimator_params['P_Post']
     for i in range(PBRRT_params["num_d_obstacles"]):
-        R = np.random.uniform(0.25, 4) # radius of obstacle
-        p = sample_outside_start_and_end_node(PBRRT_params["start"], PBRRT_params["goal"], R, PBRRT_params["map_size"])
+        R = np.random.uniform(0.5, 2) # radius of obstacle
+        p = sample_outside_start_and_end_node(PBRRT_params["start"].pos, PBRRT_params["goal"].pos, R, PBRRT_params["map_size"])
         v = np.random.uniform(0.25, 5) # radius of obstacle
         d = DynamicObstacle(p, R, v)
         estimator = KF_Circular_Obstacle_Pos_Estimator(d, Q, V, P_Post)
