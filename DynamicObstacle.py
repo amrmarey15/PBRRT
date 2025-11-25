@@ -1,6 +1,5 @@
 #Dynamic Obstacles are circles
 import numpy as np
-from KF_Circular_Obstacle_Pos_Estimator import *
 class DynamicObstacle:
     all = []
     def __init__(self, pos: np.ndarray, radius, v: np.ndarray, dt = 1):

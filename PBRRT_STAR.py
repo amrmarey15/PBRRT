@@ -7,9 +7,8 @@ from DynamicObstacle import *
 import random
 from KF_Circular_Obstacle_Pos_Estimator import *
 class PBRRT_STAR:
-    def __init__(self, PBRRT_params: dict, map: dict, estimators: list):
+    def __init__(self, PBRRT_params: dict, estimators: list):
         self.PBRRT_params = copy.deepcopy(PBRRT_params) # copy.deepcopy points to a whole new dictionary that is identical to the original dictionary
-        self.map = copy.deepcopy(map)
         self.estimators = copy.deepcopy(estimators)
         self.Tree = Periodic_KDTree(PBRRT_params["start"], PBRRT_params["N"])
 
@@ -69,11 +68,11 @@ class PBRRT_STAR:
             k_total = k_total + child_node.k_star
             child_node = child_node.parent
             if child_node == None:
-                print("Nodes not connected! You can't calculate time between these two nodes")
+                raise Exception("Nodes not connected! You can't calculate time between these two nodes")
         return k_total
     
     def is_goal_reached(self, sample: Node):
-        if np.linalg.norm(self.PBRRT_params["Goal_Node"].pos - sample.pos) < self.PBRRT_params["Final_Radius_Limit"] and sample.parent !=None:
+        if np.linalg.norm(self.PBRRT_params["goal"].pos - sample.pos) < self.PBRRT_params["Final_Radius_Limit"] and sample.parent !=None:
             return True
         else:
             return False
@@ -87,7 +86,7 @@ class PBRRT_STAR:
         
     
     def initial_plan(self): # Developing the path without a prior tree or path considered
-        map_size = np.array(self.map["Map_Size"])
+        map_size = np.array(self.PBRRT_params["Map_Size"])
         map_dim  = len(map_size)
         max_iter = self.PBRRT_params["Max_Iterations"]
         M = self.PBRRT_params["M"]
