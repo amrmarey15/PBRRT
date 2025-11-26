@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from KF_Circular_Obstacle_Pos_Estimator import *
 
-def initial_generate_map_2D(num_d_obstacles: int, PBRRT_params: dict, estimator_params: dict):
+def initial_generate_map_2D(PBRRT_params: dict, estimator_params: dict):
     map_size = PBRRT_params["map_size"]
     fig, ax = plt.subplots(figsize=(8, 8))
     ax.set_xlim(0, map_size[0])

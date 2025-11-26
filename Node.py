@@ -12,7 +12,7 @@ class Node:
         self.node_prob_collision = 0 # probability that node will not be in Cfree at the arrival time from parent node
     def __eq__(self, other):
         if isinstance(other, Node):
-            return self.pos == other.pos
+            return np.linalg.norm(self.pos - other.pos) < 0.001
         return False
 
     def __repr__(self):

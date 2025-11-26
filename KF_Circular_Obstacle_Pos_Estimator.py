@@ -40,9 +40,8 @@ class KF_Circular_Obstacle_Pos_Estimator: #Calculates probability a circular obs
         M = np.eye(self.dim) - self.K_star
         self.P_posteriori = M @ self.P_priori @ np.transpose(M) + self.K_star @ self.V @ np.transpose(self.K_star)
         
-    def calculate_probability_of_collision(self, x_query: np.ndarray, timestep):
+    def calculate_probability_of_collision(self, x_q: np.ndarray, timestep):
         mu = self.x_posteriori + timestep*(self.x_posteriori - self.x_prev)
-        x_q = np.asarray(x_q)
         d = self.dim
         sigma_squared = (self.P_posteriori[0,0])**(timestep+1)
         R = self.r

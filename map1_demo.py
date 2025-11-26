@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from utils import *
 from PBRRT_STAR import *
+import time
 
 np.random.seed(42)
 
@@ -32,7 +33,7 @@ PBRRT_params = {
     "alpha": 0.01,
     'map_size': [20,20],
     'static_obstacles_list': [obstacle1, obstacle2],
-    'num_d_obstacles': 10,
+    'num_d_obstacles': 1,
     'R': 0.3
 }
 
@@ -44,5 +45,10 @@ estimator_params = {
     'P_Post': 0.05*np.eye(len(PBRRT_params["map_size"]))
 }
 
+t0 = time.time()
+initial_generate_map_2D(PBRRT_params, estimator_params)
+print(time.time() - t0)
+
 PBRRT_instance = PBRRT_STAR(PBRRT_params)
+print("YEEE")
 PBRRT_instance.initial_plan()
