@@ -21,10 +21,9 @@ def initial_generate_map_2D(PBRRT_params: dict, estimator_params: dict):
     for rect in rects:
         ax.add_patch(rect)
     
-    circles = generate_circle_dynamic_obstacles(PBRRT_params, estimator_params)
     circ_patches = []
-    for circle in circles:
-        circ_patches.append(patches.Circle((circle[0], circle[1]), radius=circle[2], color='gray', alpha=0.6))
+    for circle in DynamicObstacle.all:
+        circ_patches.append(patches.Circle((circle.pos[0], circle.pos[1]), radius=circle.r, color='gray', alpha=0.6))
     
     for circ_patch in circ_patches:
         ax.add_patch(circ_patch)
@@ -32,6 +31,89 @@ def initial_generate_map_2D(PBRRT_params: dict, estimator_params: dict):
     ax.set_title("2D Obstacle Map")
     plt.show()
 
+
+def show_init_path2D(PBRRT_params: dict, estimator_params: dict, path: list):
+
+    path_np = np.empty((len(path), 2))
+    for i in range(len(path)):
+        path_np[i,:] = path[i].pos
+    
+
+
+    map_size = PBRRT_params["map_size"]
+    fig, ax = plt.subplots(figsize=(8, 8))
+    ax.set_xlim(0, map_size[0])
+    ax.set_ylim(0, map_size[1])
+    ax.set_aspect('equal')
+    ax.grid(False)
+    
+    rects = []
+    for static_obstacle in StaticObstacle.all:
+        rects.append(patches.Rectangle((static_obstacle.x_min, static_obstacle.y_min), static_obstacle.x_max - static_obstacle.x_min ,  static_obstacle.y_max - static_obstacle.y_min, color='gray', alpha=0.6))
+    
+    for rect in rects:
+        ax.add_patch(rect)
+    
+    circ_patches = []
+    for circle in DynamicObstacle.all:
+        circ_patches.append(patches.Circle((circle.pos[0], circle.pos[1]), radius=circle.r, color='gray', alpha=0.6))
+    
+    for circ_patch in circ_patches:
+        ax.add_patch(circ_patch)
+    
+    path = path_np
+    # Now plot the path
+    ax.plot(path[:,0], path[:,1], '-r', linewidth=2, label='Path')
+    ax.scatter(path[:,0], path[:,1], c='red', s=20)  # points
+    ax.set_title("2D Obstacle Map")
+    plt.show()
+
+
+
+def show_init_tree(PBRRT_inst, PBRRT_params: dict, estimator_params: dict):
+
+
+
+    map_size = PBRRT_params["map_size"]
+    fig, ax = plt.subplots(figsize=(8, 8))
+    ax.set_xlim(0, map_size[0])
+    ax.set_ylim(0, map_size[1])
+    ax.set_aspect('equal')
+    ax.grid(False)
+    
+
+    for node in PBRRT_inst.Tree.Nodes_in_Tree:      # list of Node objects
+        if node.parent is None:
+            continue
+        ax.plot(
+            [node.parent.pos[0], node.pos[0]],
+            [node.parent.pos[1], node.pos[1]],
+            color='gray', linewidth=1
+    )
+
+
+
+    rects = []
+    for static_obstacle in StaticObstacle.all:
+        rects.append(patches.Rectangle((static_obstacle.x_min, static_obstacle.y_min), static_obstacle.x_max - static_obstacle.x_min ,  static_obstacle.y_max - static_obstacle.y_min, color='gray', alpha=0.6))
+    
+    for rect in rects:
+        ax.add_patch(rect)
+    
+    circ_patches = []
+    for circle in DynamicObstacle.all:
+        circ_patches.append(patches.Circle((circle.pos[0], circle.pos[1]), radius=circle.r, color='gray', alpha=0.6))
+    
+    for circ_patch in circ_patches:
+        ax.add_patch(circ_patch)
+    
+
+
+
+
+
+    ax.set_title("2D Obstacle Map")
+    plt.show()
         
 
 def generate_circle_dynamic_obstacles(PBRRT_params: dict, estimator_params: dict):

@@ -2,6 +2,7 @@ import numpy as np
 from Node import *
 from DynamicObstacle import *
 from scipy.stats import ncx2
+import time
 
 class KF_Circular_Obstacle_Pos_Estimator: #Calculates probability a circular obstacle will be at a given position using a discrete Kalman Filter
     #State space eqn modeled to predict obstacle location at time k+1 is x(k+1) = I*x(k) + u where u = x(k) - x(k-1) (approximate linear velocity)
@@ -40,13 +41,16 @@ class KF_Circular_Obstacle_Pos_Estimator: #Calculates probability a circular obs
         M = np.eye(self.dim) - self.K_star
         self.P_posteriori = M @ self.P_priori @ np.transpose(M) + self.K_star @ self.V @ np.transpose(self.K_star)
         
-    def calculate_probability_of_collision(self, x_q: np.ndarray, timestep):
+    def calculate_probability_of_collision(self, x_q: np.ndarray, timestep, radius_limit = 3):
         mu = self.x_posteriori + timestep*(self.x_posteriori - self.x_prev)
         d = self.dim
-        sigma_squared = (self.P_posteriori[0,0])**(timestep+1)
+        sigma_squared = (self.P_posteriori[0,0])**(timestep)
         R = self.r
+
+        if np.linalg.norm(x_q - mu) > radius_limit:
+            return 0 #probability of collision is 0 if distance is too far from obstacle
             
-            
+        
         
         # noncentrality parameter λ = ||mu - x_q||^2 / sigma^2
         lam = np.sum((mu - x_q)**2) / (sigma_squared)
