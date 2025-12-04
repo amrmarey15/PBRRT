@@ -55,6 +55,27 @@ class Periodic_KDTree:
             point_id = self.num_points - self.number_of_points_outside_Tree + i
             near_points_indices_outside_tree.append(point_id)
         return near_points_indices_tree + near_points_indices_outside_tree
+    
+
+    def remove_point_from_tree(self, p: Node):
+        p = p.pos
+        dist, idx = self.tree.query(p)
+
+        if dist < 0.001: #The nearest neigbor returns the same point
+            self.points_in_tree_PreAlloc = self.points_in_tree_PreAlloc[np.arange(self.points_in_tree_PreAlloc.shape[0]) != idx]
+            
+        else:
+            mask = np.all(np.isclose(self.points_in_tree_PreAlloc, p), axis=1)
+            idx = np.where(mask)[0][0]
+            self.points_in_tree_PreAlloc = self.points_in_tree_PreAlloc[np.arange(self.points_in_tree_PreAlloc.shape[0]) != idx+self.num_points]
+
+        self.num_points = self.num_points - 1
+        self.rebuild_tree()
+        
+        
+
+            
+
         
         
         
