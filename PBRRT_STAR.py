@@ -7,16 +7,18 @@ from DynamicObstacle import *
 import random
 from KF_Circular_Obstacle_Pos_Estimator import *
 import time
+from utils import *
+
 class PBRRT_STAR:
     def __init__(self, PBRRT_params: dict, estimator_params: dict):
         self.PBRRT_params = copy.deepcopy(PBRRT_params) # copy.deepcopy points to a whole new dictionary that is identical to the original dictionary
         self.estimator_params = copy.deepcopy(estimator_params)
-        self.Tree = Periodic_KDTree(PBRRT_params["start"], int(PBRRT_params["N"]))
+        self.Tree = Periodic_KDTree(PBRRT_params["start"], int(PBRRT_params["N"]), max_samples_in_tree = 1_000_000)
         self.current_node_location = PBRRT_params["start"] #Where you are at right now
         self.Line_Sample_collision_checks = np.linspace(0,1,self.PBRRT_params["Line_Sample_collision_checks"])
         self.path_planned = [] #Path we plan to execute (nothing yet)
         self.path_executed = [] #
-        self.num_replans = 0
+        self.num_replans = -1
         self.k_current = 0 #real time under execution
     def Nearest(self, sampled_node: Node): # Return nearest node
         return self.Tree.Nodes_in_Tree[self.Tree.nearest(sampled_node)]
@@ -107,13 +109,16 @@ class PBRRT_STAR:
     
 
         
-    def CheckPathandFix(self):
+    def CheckPathandFix(self): #Returns False and deletes nodes of Tree if path is broken, other wise returns True if proposed path (self.path_planned) is still good
+        if np.linalg.norm(self.PBRRT_params["goal"].pos - self.current_node_location.pos) < self.PBRRT_params["Final_Radius_Limit"]:
+            return False
         gen = -1
         k_start = 0
+        path_broken_index = -1
         for i in range(len(self.path_planned)-1):
             prob_collision, k_star = self.DynamicCollisionFree(self.path_planned[i+1], k_start)
             gen = gen + 1
-            if prob_collision < self.PBRRT_params["Pcoll"]:
+            if prob_collision < self.PBRRT_params["P_coll"]:
                 self.path_planned[i+1].node_prob_collision = prob_collision
                 self.path_planned[i+1].k_star = k_star
                 updated_cost_line = prob_collision*self.PBRRT_params["M"]*(self.PBRRT_params["gamma"]**gen) + (1-prob_collision*(self.PBRRT_params["gamma"]**gen))*np.linalg.norm(self.path_planned[i+1].pos - self.path_planned[i].pos)
@@ -123,15 +128,27 @@ class PBRRT_STAR:
             else:
                 path_broken_index = i
                 break
-
+        
+        if path_broken_index > 0:
             broken_path = self.path_planned[(i+1):]
-            for node in broken_path:
-                self.Tree.remove_point_from_tree()
+            broken_path.reverse()
+            for node in broken_path: #Note broken path is reversed here
+                for node_child in node.children:
+                    self.Tree.remove_point_from_tree(node_child)
+                node.children = []
+                self.Tree.remove_point_from_tree(node)
+                node.parent.children.remove(node)
+            return False
+
+        return True
 
 
         
             
     def ExecuteStep(self):
+        if len(self.path_planned) <= 1:
+            self.current_node_location = self.path_planned[0]
+            return
         self.prev_start = self.current_node_location #initially Parent
         self.prev_start.parent = self.path_planned[1]
         self.path_executed.append(self.current_node_location)
@@ -146,18 +163,23 @@ class PBRRT_STAR:
             Dobs.pos =  + np.random.multivariate_normal(Dobs.pos, self.estimator_params['Q'])
 
     
-    def Replan(self):
-        map_size = np.array(self.PBRRT_params["map_size"])
-        map_dim  = len(map_size)
-        max_iter = self.PBRRT_params["Max_Iterations"]
-        M = self.PBRRT_params["M"]
-        gamma = self.PBRRT_params["gamma"]
-        P_coll = self.PBRRT_params["P_coll"] #
-        R = self.PBRRT_params["R"] #radius of search
-        prod_gamma_numgen_prob_param =  self.PBRRT_params["alpha"] #if gamma**num_generations is less than this number no point in computing the probability because it will begin to have no effect
-        self.num_replans = self.num_replans + 1
-        for i in range(max_iter):
-            
+    def RunPBRRT(self):
+        while True:
+            if np.linalg.norm(self.PBRRT_params["goal"].pos - self.current_node_location.pos) < self.PBRRT_params["Final_Radius_Limit"]:
+                return 0
+            self.num_replans = self.num_replans + 1
+            self.path_planned = self.InitialPlan()
+            while self.CheckPathandFix():
+                if self.is_goal_reached(self.current_node_location):
+                    return 0
+                self.ExecuteStep()
+                print(self.current_node_location)
+                
+        
+
+
+
+
 
 
     
@@ -179,15 +201,14 @@ class PBRRT_STAR:
         P_coll = self.PBRRT_params["P_coll"] #
         R = self.PBRRT_params["R"] #radius of search
         prod_gamma_numgen_prob_param =  self.PBRRT_params["alpha"] #if gamma**num_generations is less than this number no point in computing the probability because it will begin to have no effect
-
+        path_final_samples_initial_plan = []
 
         for i in range(max_iter):
-            print("Sample: "+ str(i))
             
             sampled_node = Node(np.random.rand(map_dim) * map_size)
             nearest_sample_in_tree = self.Nearest(sampled_node)
             new_sample = self.Steer(nearest_sample_in_tree, sampled_node)
-
+            print(i)
             if self.StaticCollisionFree(nearest_sample_in_tree, new_sample): #If there is no static obstacle collision from the Steer earlier (Still need to check dynamic obstacles)
                 
                 num_generations = self.calc_num_generations_to_ancestor_node(self.current_node_location, nearest_sample_in_tree) #Number of generations ahead of where robot is at so far
@@ -223,6 +244,7 @@ class PBRRT_STAR:
                             cost_min = cost
                 
                 new_sample.parent = sample_min
+                sample_min.children.append(new_sample)
                 new_sample.cost = cost_min
                 new_sample.node_prob_collision = prob_collision
                 new_sample.k_star = best_k_arrival_time
@@ -231,8 +253,6 @@ class PBRRT_STAR:
                 k_start = self.calc_time_between_two_nodes(self.current_node_location, new_sample)
                 num_generations = self.calc_num_generations_to_ancestor_node(self.current_node_location, new_sample)
 
-                print("Near nodes List Length:")
-                print(len(near_nodes_list))
                 for node in near_nodes_list:   
                     prob_collision, best_k_arrival_time = self.DynamicCollisionFree(node, k_start)
                     if np.abs(prob_collision) < 0.01:
@@ -241,15 +261,33 @@ class PBRRT_STAR:
                         c_line = prob_collision*M*(gamma**num_generations) + (1-prob_collision*(gamma**num_generations))*np.linalg.norm(node.pos - new_sample.pos)
                         cost = new_sample.cost + c_line
                         if  cost < node.cost and new_sample.parent != node: #Check later
+                            if node.parent.children:
+                                node.parent.children.remove(node)
+
                             node.parent = new_sample
+                            new_sample.children.append(node)
                             node.cost = cost
                             node.k_star = best_k_arrival_time
                             node.node_prob_collision = prob_collision
 
             if self.is_goal_reached(new_sample):
-                self.path = self.CalcFinalPath(self.current_node_location, new_sample)
-                print("Goal Reached at sample: " + str(int(i)))
-                break
+                if self.num_replans > 0:
+                    return self.CalcFinalPath(self.current_node_location, new_sample)
+                else:
+                    path_final_samples_initial_plan.append(new_sample)
+            
+        sample_min = path_final_samples_initial_plan[0]
+        for node in path_final_samples_initial_plan:
+            if node.cost < sample_min.cost:
+                sample_min = node
+        
+        return self.CalcFinalPath(self.current_node_location, sample_min)
+
+
+            
+        
+        
+
 
 
 
@@ -260,8 +298,6 @@ class PBRRT_STAR:
                 
             
             
-        print("Done!")
-        
 
                 
 

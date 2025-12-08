@@ -14,10 +14,12 @@ class Periodic_KDTree:
         self.tree = KDTree(start_point)
         self.points_not_in_tree_PreAlloc = np.empty([N, start_point.size]) #Preallocated Matrix Initialization
         self.number_of_points_outside_Tree = 0
+        self.dim = self.points_in_tree_PreAlloc.shape[1]
 
     def rebuild_tree(self):
         self.tree = KDTree(self.points_in_tree_PreAlloc[0:self.num_points, :])
         self.number_of_points_outside_Tree = 0
+        self.points_not_in_tree_PreAlloc = np.empty([self.N, self.dim])
 
 
     def add_point(self, p: Node):
@@ -58,6 +60,7 @@ class Periodic_KDTree:
     
 
     def remove_point_from_tree(self, p: Node):
+        self.Nodes_in_Tree.remove(p)
         p = p.pos
         dist, idx = self.tree.query(p)
 
@@ -65,13 +68,15 @@ class Periodic_KDTree:
             self.points_in_tree_PreAlloc = self.points_in_tree_PreAlloc[np.arange(self.points_in_tree_PreAlloc.shape[0]) != idx]
             
         else:
-            mask = np.all(np.isclose(self.points_in_tree_PreAlloc, p), axis=1)
+            mask = np.all(np.isclose(self.points_not_in_tree_PreAlloc, p), axis=1)
+            if not np.any(mask): #if no point matches
+                return
             idx = np.where(mask)[0][0]
             self.points_in_tree_PreAlloc = self.points_in_tree_PreAlloc[np.arange(self.points_in_tree_PreAlloc.shape[0]) != idx+self.num_points]
 
         self.num_points = self.num_points - 1
         self.rebuild_tree()
-        
+
         
 
             
