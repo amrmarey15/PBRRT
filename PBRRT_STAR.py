@@ -8,7 +8,6 @@ import random
 from KF_Circular_Obstacle_Pos_Estimator import *
 import time
 from utils import *
-
 class PBRRT_STAR:
     def __init__(self, PBRRT_params: dict, estimator_params: dict):
         self.PBRRT_params = copy.deepcopy(PBRRT_params) # copy.deepcopy points to a whole new dictionary that is identical to the original dictionary
@@ -20,6 +19,9 @@ class PBRRT_STAR:
         self.path_executed = [] #
         self.num_replans = -1
         self.k_current = 0 #real time under execution
+        self.rng = np.random.default_rng(seed=42)
+        self.p_collision_list = []
+
     def Nearest(self, sampled_node: Node): # Return nearest node
         return self.Tree.Nodes_in_Tree[self.Tree.nearest(sampled_node)]
 
@@ -54,7 +56,8 @@ class PBRRT_STAR:
             k_arrival = k + k_start
             no_collision_P_list = np.empty(len(DynamicObstacle.all)) #This list will contain the probabilities that collision will happen with each one of the obstacles at arrival time
             for dynamic_obstacle, i in zip(DynamicObstacle.all, range(len(DynamicObstacle.all))):
-                P_obstacle = dynamic_obstacle.estimator.calculate_probability_of_collision(sample_arrival.pos, k_arrival) #Probability obstacle will cause collision at node
+                P_obstacle = dynamic_obstacle.estimator.calculate_probability_of_collision(sample_arrival.pos, k_arrival, dynamic_obstacle.locations_list[k_arrival]) #Probability obstacle will cause collision at node
+
                 no_collision_P_list[i] = 1 - P_obstacle #Probability of no collision
             probabilty_collision = 1 - np.prod(no_collision_P_list)
             if probabilty_collision < min_probability_collision:
@@ -116,9 +119,9 @@ class PBRRT_STAR:
         k_start = 0
         path_broken_index = -1
         for i in range(len(self.path_planned)-1):
-            prob_collision, k_star = self.DynamicCollisionFree(self.path_planned[i+1], k_start)
+            prob_collision, k_star = self.DynamicCollisionFree(self.path_planned[i+1], k_start+self.path_planned[i+1].k_star)
             gen = gen + 1
-            if prob_collision < self.PBRRT_params["P_coll"]:
+            if prob_collision*(self.PBRRT_params["gamma"]**i) < self.PBRRT_params["P_coll"]:
                 self.path_planned[i+1].node_prob_collision = prob_collision
                 self.path_planned[i+1].k_star = k_star
                 updated_cost_line = prob_collision*self.PBRRT_params["M"]*(self.PBRRT_params["gamma"]**gen) + (1-prob_collision*(self.PBRRT_params["gamma"]**gen))*np.linalg.norm(self.path_planned[i+1].pos - self.path_planned[i].pos)
@@ -143,24 +146,84 @@ class PBRRT_STAR:
         return True
 
 
-        
-            
+
+
     def ExecuteStep(self):
         if len(self.path_planned) <= 1:
             self.current_node_location = self.path_planned[0]
             return
-        self.prev_start = self.current_node_location #initially Parent
-        self.prev_start.parent = self.path_planned[1]
+        
+        self.current_node_location = self.path_planned[0] #Initially Child
         self.path_executed.append(self.current_node_location)
         self.path_planned = self.path_planned[1:]
-        self.current_node_location = self.path_planned[0] #Initially Child
+        #self.current_node_location = self.path_planned[0] #Initially Child
+        self.current_node_location.k_star_exec = self.current_node_location.k_star
+        self.current_node_location.k_star = 0
         self.current_node_location.cost = 0 #Start should always have zero cost
-        self.current_node_location.cost_recomp = self.current_node_location.cost_recomp + 1
-
-
         self.current_node_location.parent = None
         for Dobs in DynamicObstacle.all:
-            Dobs.pos =  + np.random.multivariate_normal(Dobs.pos, self.estimator_params['Q'])
+            del Dobs.pos_list[0:self.current_node_location.k_star_exec]
+        # i = 0
+        # for Dobs in DynamicObstacle.all:
+        #     Dobs.pos = self.rng.multivariate_normal(Dobs.pos, self.estimator_params['Q'])
+        #     Dobs.pos_list.append(Dobs.pos)
+        #     KF_Circular_Obstacle_Pos_Estimator.all[i].gaussian_estimate(Dobs.pos)
+        #     i = i+1
+        
+
+
+
+
+
+        # node_to_remove = self.current_node_location
+        # node_to_remove_children = self.current_node_location.children
+        # node_to_remove_children.remove(self.path_planned[1])
+        # subtree_remove_nodes = []
+        # for node in node_to_remove_children:
+        #     subtree_remove_nodes.append(self.Tree.collect_subtree_bfs(node))
+        # subtree_remove_nodes.append
+
+
+    
+
+        # for node in node_to_remove_children:
+        #     remove_subtree(node)
+
+            
+        # node_to_remove.children = []
+        # self.Tree.remove_point_from_tree(node_to_remove)
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        ####### Will delete probably
+
+        # self.prev_start = self.current_node_location #initially Parent
+        # self.prev_start.parent = self.path_planned[1]
+        # self.path_executed.append(self.current_node_location)
+        # self.path_planned = self.path_planned[1:]
+        # self.current_node_location = self.path_planned[0] #Initially Child
+        # self.current_node_location.cost = 0 #Start should always have zero cost
+        # self.current_node_location.cost_recomp = self.current_node_location.cost_recomp + 1
+
+        #####
+
+
+        
 
     
     def RunPBRRT(self):
@@ -169,10 +232,19 @@ class PBRRT_STAR:
                 return 0
             self.num_replans = self.num_replans + 1
             self.path_planned = self.InitialPlan()
+            print(self.current_node_location)
             while self.CheckPathandFix():
                 if self.is_goal_reached(self.current_node_location):
                     return 0
                 self.ExecuteStep()
+                i = 0
+                k = 0
+                while i < 50 and i < len(self.path_planned):
+                    k = k + self.path_planned[i].k_star
+                    for Dobs in DynamicObstacle.all:
+                        if (np.linalg.norm(Dobs.pos_list[k] - self.path_planned[i].pos)) < Dobs.r + self.PBRRT_params["Step_Size"]:
+                            self.path_planned = self.InitialPlan()
+                    i = i + 1
                 print(self.current_node_location)
                 
         
@@ -193,6 +265,7 @@ class PBRRT_STAR:
         
     
     def InitialPlan(self): # Developing the path without a prior tree or path considered
+        self.Tree = Periodic_KDTree(self.current_node_location, int(self.PBRRT_params["N"]), max_samples_in_tree = 1_000_000)
         map_size = np.array(self.PBRRT_params["map_size"])
         map_dim  = len(map_size)
         max_iter = self.PBRRT_params["Max_Iterations"]
@@ -255,8 +328,6 @@ class PBRRT_STAR:
 
                 for node in near_nodes_list:   
                     prob_collision, best_k_arrival_time = self.DynamicCollisionFree(node, k_start)
-                    if np.abs(prob_collision) < 0.01:
-                        prob_collision = 0 #Prevent numerical instabilities 
                     if self.StaticCollisionFree(new_sample, node) and prob_collision < P_coll:
                         c_line = prob_collision*M*(gamma**num_generations) + (1-prob_collision*(gamma**num_generations))*np.linalg.norm(node.pos - new_sample.pos)
                         cost = new_sample.cost + c_line
@@ -271,7 +342,7 @@ class PBRRT_STAR:
                             node.node_prob_collision = prob_collision
 
             if self.is_goal_reached(new_sample):
-                if self.num_replans > 0:
+                if self.num_replans > 50: #Change and test
                     return self.CalcFinalPath(self.current_node_location, new_sample)
                 else:
                     path_final_samples_initial_plan.append(new_sample)

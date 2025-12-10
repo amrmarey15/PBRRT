@@ -11,6 +11,7 @@ class Node:
         self.in_Tree = False
         self.node_prob_collision = 0 # probability that node will not be in Cfree at the arrival time from parent node
         self.cost_recomp = 0 #Number of times cost function was re-computed
+        self.k_star_exec = 1 #used in execution
     def __eq__(self, other):
         if isinstance(other, Node):
             return np.linalg.norm(self.pos - other.pos) < 0.001
@@ -44,6 +45,7 @@ class Node:
             if current_node == None:
                 raise Exception("Nodes are not connected")
         return num_generations
+    
             
             
         

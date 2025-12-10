@@ -117,18 +117,23 @@ def show_init_tree(PBRRT_inst, PBRRT_params: dict, estimator_params: dict):
         
 
 def generate_circle_dynamic_obstacles(PBRRT_params: dict, estimator_params: dict):
+    rng_gen = np.random.default_rng(seed=22)
+
     circles = []
     Q = estimator_params['Q']
     V = estimator_params['V']
     P_Post = estimator_params['P_Post']
     for i in range(PBRRT_params["num_d_obstacles"]):
-        R = np.random.uniform(0.5, 2) # radius of obstacle
-        p = sample_outside_start_and_end_node(PBRRT_params["start"].pos, PBRRT_params["goal"].pos, R, PBRRT_params["map_size"])
-        v = np.random.uniform(0.25, 5) # radius of obstacle
+        R = rng_gen.uniform(0.5, 2) # radius of obstacle
+        p = sample_outside_start_and_end_node(PBRRT_params["start"].pos, PBRRT_params["goal"].pos, R+0.25, PBRRT_params["map_size"], rng_gen)
+        v = rng_gen.uniform(0.25, 5) # velocity (not used)
         d = DynamicObstacle(p, R, v)
         estimator = KF_Circular_Obstacle_Pos_Estimator(d, Q, V, P_Post)
         circ = [p[0], p[1], R]
         circles.append(circ)
+    
+    for Dobs in DynamicObstacle.all:
+        Dobs.generate_trajectory(rng_gen)
     
     return circles
         
@@ -138,18 +143,39 @@ def generate_circle_dynamic_obstacles(PBRRT_params: dict, estimator_params: dict
         
 
 
-def sample_outside_start_and_end_node(c1, c2, r, map_size):  #Make sure you generate random dynamic obstacles not at starting node and end node
+def sample_outside_start_and_end_node(c1, c2, r, map_size, rng_gen):  #Make sure you generate random dynamic obstacles not at starting node and end node
     while True:
         # uniform point in bounding box
         
         p = np.empty(len(map_size))
         for i in range(len(map_size)):
-            p[i] = np.random.uniform(0, map_size[i])
+            p[i] = rng_gen.uniform(0, map_size[i])
         
         # distances to circles
         d1 = np.linalg.norm(p - c1)
         d2 = np.linalg.norm(p - c2)
         
+        c2 = True
+        for Sobs in StaticObstacle.all:
+            if not ((p[0] < Sobs.x_min or p[0] > Sobs.x_max) and (p[1] < Sobs.y_min or p[1] > Sobs.y_max)):
+                c2 = False
+
         # accept if outside both circles
-        if d1 > r and d2 > r:
+        if d1 > r and d2 > r and c2:
             return p
+
+def remove_subtree(node: Node):
+    """Detach `node` and all its descendants from the tree."""
+    parent = node.parent
+
+    if parent is not None:
+        # Remove this node from its parent's children list
+        parent.children = [c for c in parent.children if c is not node]
+
+    # Cut all links so this subtree is isolated
+    node.parent = None
+    # Optionally also detach children to help GC / avoid accidental use
+    # (Not strictly required if you're just relying on Python GC.)
+    for child in node.children:
+        child.parent = None
+    node.children = []

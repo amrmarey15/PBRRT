@@ -10,6 +10,9 @@ class DynamicObstacle:
         self.dt = dt
         DynamicObstacle.all.append(self) # Add to list of Dynamic Obstacles
         self.estimator = None
+        self.pos_list = [] #Graph
+        self.locations_list = []
+
     def update_state(self, future_pos: np.ndarray):
         self.pos = future_pos
     
@@ -19,4 +22,16 @@ class DynamicObstacle:
         return False
         
     def __repr__(self):
-        return f"({self.x},{self.y}, {self.r})"
+        return f"({self.pos}, {self.r})"
+    
+    def generate_trajectory(self, rng, T_max = 100000):
+        pos_x = self.pos[0]
+        pos_y = self.pos[1]
+        for t in range(T_max):
+            pos_x = pos_x + rng.uniform(-0.4,0.4)*np.cos(t)
+            pos_y = pos_y + rng.uniform(-0.4,0.4)*np.sin(t)
+            pos = np.array([pos_x, pos_y])
+            self.locations_list.append(pos)
+            self.pos_list.append(pos)
+
+

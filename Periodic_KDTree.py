@@ -1,7 +1,7 @@
 from scipy.spatial import KDTree
 import numpy as np
 from Node import Node
-
+from collections import deque
 class Periodic_KDTree:
     def __init__(self, start_point: Node, N: int, max_samples_in_tree: int = 1_000_000): #N is after how many number of points you rebuild KDTree
         self.Nodes_in_Tree = [start_point]
@@ -76,6 +76,21 @@ class Periodic_KDTree:
 
         self.num_points = self.num_points - 1
         self.rebuild_tree()
+    
+    def collect_subtree_bfs(node):
+        result = []
+        queue = deque([node])
+
+        while queue:
+            current = queue.popleft()
+            result.append(current)
+            queue.extend(current.children)
+
+        return result
+ 
+
+
+
 
         
 

@@ -41,18 +41,36 @@ class KF_Circular_Obstacle_Pos_Estimator: #Calculates probability a circular obs
         M = np.eye(self.dim) - self.K_star
         self.P_posteriori = M @ self.P_priori @ np.transpose(M) + self.K_star @ self.V @ np.transpose(self.K_star)
         
-    def calculate_probability_of_collision(self, x_q: np.ndarray, timestep, radius_limit = 3):
-        mu = self.x_posteriori + timestep*(self.x_posteriori - self.x_prev)
-        d = self.dim
-        sigma_squared = (self.P_posteriori[0,0])**(timestep)
-        R = self.r
+    # def calculate_probability_of_collision(self, x_q: np.ndarray, timestep, mu, radius_limit = 3):
+    #     #mu = self.x_posteriori + timestep*(self.x_posteriori - self.x_prev)
+    #     d = self.dim
+    #     sigma_squared = (self.P_posteriori[0,0])*(timestep)
+    #     R = self.r
 
-        if np.linalg.norm(x_q - mu) > radius_limit:
-            return 0 #probability of collision is 0 if distance is too far from obstacle
+    #     if np.linalg.norm(x_q - mu) > radius_limit:
+    #         return 0 #probability of collision is 0 if distance is too far from obstacle
             
         
         
-        # noncentrality parameter λ = ||mu - x_q||^2 / sigma^2
+    #     # noncentrality parameter λ = ||mu - x_q||^2 / sigma^2
+    #     lam = np.sum((mu - x_q)**2) / (sigma_squared)
+
+    #     # upper limit for the noncentral chi-square
+    #     t = (R**2) / (sigma_squared)
+
+    #     # CDF of noncentral chi-square
+    #     return ncx2.cdf(t, df=d, nc=lam)
+
+    def calculate_probability_of_collision(self, x_q: np.ndarray, timestep, mu, radius_limit = 6):
+        #mu = self.x_posteriori + timestep*(self.x_posteriori - self.x_prev)
+        d = self.dim
+        sigma_squared = (self.P_posteriori[0,0])
+        R = self.r
+
+        if np.linalg.norm(x_q - mu) > radius_limit:
+            return 0
+        
+         # noncentrality parameter λ = ||mu - x_q||^2 / sigma^2
         lam = np.sum((mu - x_q)**2) / (sigma_squared)
 
         # upper limit for the noncentral chi-square
@@ -60,7 +78,9 @@ class KF_Circular_Obstacle_Pos_Estimator: #Calculates probability a circular obs
 
         # CDF of noncentral chi-square
         return ncx2.cdf(t, df=d, nc=lam)
-        
+    
+    def gaussian_estimate(self, x_measured: np.ndarray):
+        x_posteriori = np.random.multivariate_normal(x_measured, self.P_priori)
         
         
         
