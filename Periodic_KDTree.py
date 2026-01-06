@@ -60,22 +60,25 @@ class Periodic_KDTree:
     
 
     def remove_point_from_tree(self, p: Node):
-        self.Nodes_in_Tree.remove(p)
-        p = p.pos
-        dist, idx = self.tree.query(p)
+        try:
+            self.Nodes_in_Tree.remove(p)
+            p = p.pos
+            dist, idx = self.tree.query(p)
 
-        if dist < 0.001: #The nearest neigbor returns the same point
-            self.points_in_tree_PreAlloc = self.points_in_tree_PreAlloc[np.arange(self.points_in_tree_PreAlloc.shape[0]) != idx]
-            
-        else:
-            mask = np.all(np.isclose(self.points_not_in_tree_PreAlloc, p), axis=1)
-            if not np.any(mask): #if no point matches
-                return
-            idx = np.where(mask)[0][0]
-            self.points_in_tree_PreAlloc = self.points_in_tree_PreAlloc[np.arange(self.points_in_tree_PreAlloc.shape[0]) != idx+self.num_points]
+            if dist < 0.001: #The nearest neigbor returns the same point
+                self.points_in_tree_PreAlloc = self.points_in_tree_PreAlloc[np.arange(self.points_in_tree_PreAlloc.shape[0]) != idx]
+                
+            else:
+                mask = np.all(np.isclose(self.points_not_in_tree_PreAlloc, p), axis=1)
+                if not np.any(mask): #if no point matches
+                    return
+                idx = np.where(mask)[0][0]
+                self.points_in_tree_PreAlloc = self.points_in_tree_PreAlloc[np.arange(self.points_in_tree_PreAlloc.shape[0]) != idx+self.num_points]
 
-        self.num_points = self.num_points - 1
-        self.rebuild_tree()
+            self.num_points = self.num_points - 1
+            self.rebuild_tree()
+        except:
+            pass
     
     def collect_subtree_bfs(node):
         result = []

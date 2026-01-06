@@ -28,8 +28,8 @@ class DynamicObstacle:
         pos_x = self.pos[0]
         pos_y = self.pos[1]
         for t in range(T_max):
-            pos_x = pos_x + rng.uniform(-0.4,0.4)*np.cos(t)
-            pos_y = pos_y + rng.uniform(-0.4,0.4)*np.sin(t)
+            pos_x = pos_x + rng.uniform(-0.15,0.15)*np.cos(rng.uniform(-np.pi,np.pi)*t)
+            pos_y = pos_y + rng.uniform(-0.15,0.15)*np.sin(rng.uniform(-np.pi,np.pi)*t)
             pos = np.array([pos_x, pos_y])
             self.locations_list.append(pos)
             self.pos_list.append(pos)

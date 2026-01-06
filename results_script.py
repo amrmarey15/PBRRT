@@ -16,13 +16,14 @@ def show_probability_graph(PBRRT_inst):
     plt.ylabel(r"$P_{c}$")
     plt.title("Probability of Collision over Time")
     plt.show()
+    return prob_list
 
-def distance_to_nearest_obstacle_graph(PBRRT_inst, robot_traj):
+def distance_to_nearest_obstacle_graph(robot_traj):
     risk_list = []
     for i in range(robot_traj.shape[0]):
         min_dist = np.inf
         for Dobs in DynamicObstacle.all:
-            dist = np.linalg.norm(robot_traj[i,:] - Dobs.pos_list[i]) - Dobs.r
+            dist = np.linalg.norm(robot_traj[i,:] - Dobs.locations_list[i]) - Dobs.r
             if dist < min_dist:
                 min_dist = dist
         risk_list.append(min_dist)
@@ -32,6 +33,7 @@ def distance_to_nearest_obstacle_graph(PBRRT_inst, robot_traj):
     plt.ylabel(r"$D_{min}$")
     plt.title("Distance to nearest Dynamic Obstacle over Time")
     plt.show()
+    return risk_list
         
 
     

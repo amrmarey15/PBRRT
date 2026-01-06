@@ -5,6 +5,7 @@ class Node:
     def __init__(self, pos):
         self.pos = np.array(pos)
         self.parent = None
+        self.parent_exec = None
         self.cost = 0.0     
         self.children = []
         self.k_star = 1 #Arrival time from parent

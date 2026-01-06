@@ -117,15 +117,15 @@ def show_init_tree(PBRRT_inst, PBRRT_params: dict, estimator_params: dict):
         
 
 def generate_circle_dynamic_obstacles(PBRRT_params: dict, estimator_params: dict):
-    rng_gen = np.random.default_rng(seed=22)
+    rng_gen = np.random.default_rng(seed=5)
 
     circles = []
     Q = estimator_params['Q']
     V = estimator_params['V']
     P_Post = estimator_params['P_Post']
     for i in range(PBRRT_params["num_d_obstacles"]):
-        R = rng_gen.uniform(0.5, 2) # radius of obstacle
-        p = sample_outside_start_and_end_node(PBRRT_params["start"].pos, PBRRT_params["goal"].pos, R+0.25, PBRRT_params["map_size"], rng_gen)
+        R = rng_gen.uniform(0.5, 1.25) # radius of obstacle
+        p = sample_outside_start_and_end_node(PBRRT_params["start"].pos, PBRRT_params["goal"].pos, 1, PBRRT_params["map_size"], rng_gen)
         v = rng_gen.uniform(0.25, 5) # velocity (not used)
         d = DynamicObstacle(p, R, v)
         estimator = KF_Circular_Obstacle_Pos_Estimator(d, Q, V, P_Post)
